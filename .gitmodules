@@ -1,0 +1,3 @@
+[submodule "pokerlib"]
+	path = pokerlib
+	url = https://github.com/kuco23/pokerlib.git
