@@ -10,6 +10,7 @@ Every participant aiming to play should do the following steps
 - clone this repo as `git clone https://github.com/kuco23/pubnub-poker.git --recurse-submodules`,
 - install dependencies ([`pubnub`](https://pypi.org/project/pubnub/) and [`cryptography`](https://pypi.org/project/cryptography/)),
 - rename `config_template.ini` to `config.ini` and fill in the relevant data (`uuid` is a unique user name).
+
 One special (trusted) participant should run `dealer.py`, while everyone else should run `input.py` and `output.py` in seperate shells  (`git bash` sometimes hides python's printed output, so maybe use something else (`git bash` from vsc is ok)). 
 
 ### Game rules
@@ -20,6 +21,7 @@ Anything typed into the terminal running `input.py` should be visible to all fro
 - `FOLD` : fold
 - `RAISE X` : raise amount `X`
 - `ALLIN` : go all in
+
 Everything written to the chat is visible to all (the dealer ignores what's not recognized as a command).
 
 ## TODO
