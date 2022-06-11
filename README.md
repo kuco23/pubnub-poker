@@ -21,11 +21,13 @@ Anything typed into the terminal running `input.py` should be visible to all fro
 - `FOLD` : fold
 - `RAISE X` : raise amount `X`
 - `ALLIN` : go all in
+- `LEAVETABLE` : leave the table (everything is forfitted)
 
 Everything written to the chat is visible to all (the dealer ignores what's not recognized as a command).
 
 ## TODO
-- [ ] enable players leaving the table (without having to lose all money)
 - [ ] enable money info queries
+- [ ] move output formatting from `dealer.py` to `output.py`
+- [ ] make output formatting customizable
 
 

@@ -1,10 +1,11 @@
+import json
+
 from pubnub.callbacks import SubscribeCallback
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
 
-from cryptolib import decrypt, prvkeyget
-
-import config as cfg
+from lib.cryptolib import decrypt, prvkeyget
+import lib.config as cfg
 
 pnconfig = PNConfiguration()
 
@@ -14,8 +15,6 @@ pnconfig.uuid = cfg.PUBNUB_UUID
 pubnub = PubNub(pnconfig)
 
 channel_name = cfg.PUBNUB_POKERCHANNEL
-private_start = f'---- private'
-private_identifier = f'---- private {pnconfig.uuid} private -----'
 
 class SubscribeHandler(SubscribeCallback):
     
@@ -26,14 +25,22 @@ class SubscribeHandler(SubscribeCallback):
       pass  # Handle incoming presence data
 
   def message(self, pubnub, message):
-      mes, pub = message.message, message.publisher
-      if mes.startswith(private_identifier):
-        prv = prvkeyget()
-        encr = mes[len(private_identifier):]
-        cards = decrypt(prv, encr)
-        print(cards.decode())
-      elif not mes.startswith(private_start): 
-          print(f'{pub}: {mes}') 
+      data = json.loads(message.message)
+      pub = message.publisher
+      
+      if pub == 'dealer':
+        for d in data:
+            if d['visibility'] == 'public': 
+                msg = d['msg']
+                print(f'{pub}: {msg}') 
+            elif d['visibility'] == pnconfig.uuid:
+                prv = prvkeyget()
+                encr = d['msg']
+                cards = decrypt(prv, encr)
+                print(cards.decode())
+      else: 
+          msg = data['msg']
+          print(f'{pub}: {msg}')
       
   def signal(self, pubnub, signal):
       pass # Handle incoming signals

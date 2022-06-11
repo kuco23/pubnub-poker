@@ -1,8 +1,10 @@
+import json
+
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
-from cryptolib import pubkeyget, pubkeyserialized
 
-import config as cfg
+from lib.cryptolib import pubkeyget, pubkeyserialized
+import lib.config as cfg
 
 pnconfig = PNConfiguration()
 
@@ -19,9 +21,8 @@ def my_publish_callback(envelope, status):
 
 pubnub.subscribe().channels(channel_name).execute()
 while True: 
-    cmd = input()
-    if cmd == 'send public key':
-        pbk = pubkeyserialized(pubkeyget())
-        cmd = 'pubkey' + pbk
+    data = {'msg': input()}
+    if data['msg'] == 'buyin': 
+        data['pubk'] = pubkeyserialized(pubkeyget())
     pubnub.publish().channel(channel_name).message(
-        cmd).pn_async(my_publish_callback)
+        json.dumps(data)).pn_async(my_publish_callback)
