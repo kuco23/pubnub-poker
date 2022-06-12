@@ -64,7 +64,7 @@ def pubkeydeserialized(ser):
         ser.encode(), backend=default_backend())
 
 def encrypt(pbk, data):
-    return pbk.encrypt(data, padding.OAEP(
+    return pbk.encrypt(data.encode(), padding.OAEP(
         mgf=padding.MGF1(algorithm=hashes.SHA256()),
         algorithm=hashes.SHA256(),
         label=None
@@ -75,5 +75,5 @@ def decrypt(prk, encr):
         mgf=padding.MGF1(algorithm=hashes.SHA256()),
         algorithm=hashes.SHA256(),
         label=None
-    ))
+    )).decode()
         

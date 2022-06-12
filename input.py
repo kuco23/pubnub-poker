@@ -7,7 +7,6 @@ from lib.cryptolib import pubkeyget, pubkeyserialized
 import lib.config as cfg
 
 pnconfig = PNConfiguration()
-
 pnconfig.subscribe_key = cfg.PUBNUB_SUBSCRIBEKEY
 pnconfig.publish_key = cfg.PUBNUB_PUBLISHKEY
 pnconfig.uuid = cfg.PUBNUB_UUID
@@ -17,7 +16,7 @@ channel_name = cfg.PUBNUB_POKERCHANNEL
 
 def my_publish_callback(envelope, status):
     if status.is_error():
-        print(status)
+        print(envelope, status)
 
 pubnub.subscribe().channels(channel_name).execute()
 while True: 
