@@ -29,9 +29,9 @@ class SubscribeHandler(SubscribeCallback):
                 
                 if d['visibility'] == 'public': pass
                 elif d['visibility'] == cfg.PUBNUB_UUID:
-                    prv = prvkeyget()
-                    pf = d['private_field']
-                    d[pf] = decrypt(prv, d[pf])
+                    if (pf := d.get('private_field')):
+                        prv = prvkeyget()
+                        d[pf] = decrypt(prv, d[pf])
                 else: continue
                 
                 self.formatPokerData(d)

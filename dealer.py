@@ -6,6 +6,7 @@ from pubnub.pubnub import PubNub
 
 from pokerlib.pokerlib import Player, PlayerGroup, Table
 from pokerlib.pokerlib.enums import *
+
 from lib.cryptolib import encrypt, pubkeydeserialized
 import lib.config as cfg
 
@@ -25,21 +26,19 @@ class SubscribeHandler(SubscribeCallback):
       super().__init__()
 
   def message(self, pubnub, message):
-      data = loads(message.message)
       pub = message.publisher
       if pub == 'dealer': return
+      data = loads(message.message)
       
-      if data['msg'] == 'buyin':
-          pubk = pubkeydeserialized(data['pubk'])
-          player = PubNubPlayer(self.table.id, pub, 100, pubk)
-          if player not in self.table: self.table += [player]
-      
-      ret = self.table.translate(data['msg'])
-      if ret is not None:
-          cmd, val = ret
-          self.table.publicIn(pub, cmd, raise_by=val)
-    
-      self.table.sendQueuedMessages()
+      if (iid := self.table.getInId(data['msg'])) is not None:
+
+          if iid is TablePublicInId.BUYIN:
+              pubk = pubkeydeserialized(data['pubk'])
+              player = PubNubPlayer(self.table.id, pub, 100, pubk)
+              data['player'] = player
+              
+          self.table.publicIn(pub, iid, data)
+          self.table.sendQueuedMessages()
 
 def my_publish_callback(envelope, status):
     if status.is_error():
@@ -67,13 +66,11 @@ class PubNubTable(Table):
     def encodeMessages(self):
         messages = []
         for out in self.message_queue:
-            if out['visibility'] == 'public':
-                messages.append(out)
-            else:
+            if out['visibility'] == 'public': pass
+            elif (pf := out.get('private_field')):
                 player = self[out['player_id']]
-                pf = out['private_field']
                 out[pf] = encrypt(player.pubk, str(out[pf]))
-                messages.append(out)
+            messages.append(out)
         return dumps(messages)
             
     def privateOut(self, player_id, out_id, **kwargs):
@@ -100,21 +97,16 @@ class PubNubTable(Table):
         self.message_queue.append(kwargs)
 
     @staticmethod
-    def translate(msg):
-        if msg.startswith('RAISE'):
-            sval = msg.split()[-1]
-            if sval.isdigit(): 
-                return RoundPublicInId.RAISE, int(sval)
-        elif msg in RoundPublicInId.__members__:
-            return RoundPublicInId.__getitem__(msg), 0
+    def getInId(msg):
+        if msg in RoundPublicInId.__members__:
+            return RoundPublicInId.__getitem__(msg)
         elif msg in TablePublicInId.__members__:
-            return TablePublicInId.__getitem__(msg), 0
+            return TablePublicInId.__getitem__(msg)
     
     @staticmethod 
     def unpackCards(cards):
         return [(s.value, r.value) for s, r in cards]
         
-    
 table = PubNubTable(0, 6, PlayerGroup([]), 100, 5, 10)
 pubnub.add_listener(SubscribeHandler(table))
 pubnub.subscribe().channels(channel_name).execute()

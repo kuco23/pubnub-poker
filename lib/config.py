@@ -1,3 +1,4 @@
+from re import compile
 from json import loads
 from pathlib import Path
 import configparser
@@ -16,7 +17,11 @@ def setVarName(section, key):
 
 def formatData(section, key):
     vals = parser.get(section, key)
-    return loads(vals) if section == 'repr-poker' else vals
+    if section == 'repr-poker':
+        return loads(vals)
+    if section in ['input-round', 'input-table']:
+        return compile(vals)
+    else: return vals
         
 for path in paths:
     parser.read(path, encoding='utf-8-sig')
