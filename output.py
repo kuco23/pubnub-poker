@@ -67,6 +67,8 @@ class SubscribeHandler(SubscribeCallback):
             msg = getattr(cfg, 'OUTPUT_ROUND_PRIVATE_' + out_id)
         elif out_id in TablePublicOutId.__members__:
             msg = getattr(cfg, 'OUTPUT_TABLE_PUBLIC_' + out_id)
+        elif out_id in TablePrivateOutId.__members__:
+            msg = getattr(cfg, 'OUTPUT_TABLE_PRIVATE_' + out_id)
         else: return print('error', out_id)
         return msg.format(**data)
 
