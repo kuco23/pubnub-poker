@@ -1,9 +1,7 @@
 from json import dumps
-import re
 
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
-
 from pokerlib.pokerlib.enums import *
 
 from lib.cryptolib import pubkeyget, pubkeyserialized
@@ -18,33 +16,32 @@ pubnub = PubNub(pnconfig)
 channel_name = cfg.PUBNUB_POKERCHANNEL
 
 def my_publish_callback(envelope, status):
-    if status.is_error():
-        print(envelope, status)
+    if status.is_error(): print(envelope, status)
 
-def translate(data):
+def translateDealerInput(data):
     msg = data['msg']
     if cfg.INPUT_ROUND_FOLD.match(msg):
-        data['msg'] = RoundPublicInId.FOLD.name
+        data['cmd'] = RoundPublicInId.FOLD.name
     elif cfg.INPUT_ROUND_CHECK.match(msg):
-        data['msg'] = RoundPublicInId.CHECK.name
+        data['cmd'] = RoundPublicInId.CHECK.name
     elif cfg.INPUT_ROUND_CALL.match(msg):
-        data['msg'] = RoundPublicInId.CALL.name
+        data['cmd'] = RoundPublicInId.CALL.name
     elif (src := cfg.INPUT_ROUND_RAISE.search(msg)):
-        data['raise_by'] = src.group('raise_by')
-        data['msg'] = RoundPublicInId.RAISE.name
+        data['raise_by'] = int(src.group('raise_by'))
+        data['cmd'] = RoundPublicInId.RAISE.name
     elif cfg.INPUT_ROUND_ALLIN.match(msg):
-        data['msg'] = RoundPublicInId.ALLIN.name
-    elif cfg.INPUT_TABLE_STARTROUND.match(msg):
-        data['msg'] = TablePublicInId.STARTROUND.name
-    elif cfg.INPUT_TABLE_LEAVETABLE.match(msg):
-        data['msg'] = TablePublicInId.LEAVETABLE.name
+        data['cmd'] = RoundPublicInId.ALLIN.name
     elif cfg.INPUT_TABLE_BUYIN.match(msg): 
-        data['msg'] = TablePublicInId.BUYIN.name
+        data['cmd'] = TablePublicInId.BUYIN.name
         data['pubk'] = pubkeyserialized(pubkeyget())
+    elif cfg.INPUT_TABLE_STARTROUND.match(msg):
+        data['cmd'] = TablePublicInId.STARTROUND.name
+    elif cfg.INPUT_TABLE_LEAVETABLE.match(msg):
+        data['cmd'] = TablePublicInId.LEAVETABLE.name
 
 pubnub.subscribe().channels(channel_name).execute()
 while True: 
     data = {'msg': input()}
-    translate(data)
+    translateDealerInput(data)
     pubnub.publish().channel(channel_name).message(
         dumps(data)).pn_async(my_publish_callback)

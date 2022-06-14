@@ -3,7 +3,6 @@ from json import loads
 from pubnub.callbacks import SubscribeCallback
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub
-
 from pokerlib.pokerlib.enums import *
 
 from lib.cryptolib import decrypt, prvkeyget
@@ -21,30 +20,29 @@ channel_name = cfg.PUBNUB_POKERCHANNEL
 class SubscribeHandler(SubscribeCallback):
     
     def message(self, pubnub, message):
-        msg = message.message
-        pub = message.publisher
-        
+        if message.publisher == cfg.PUBNUB_UUID: return
+        pub, msg = message.publisher, message.message
+            
         if pub == 'dealer':
             for d in loads(msg):
                 
                 if d['visibility'] == 'public': pass
                 elif d['visibility'] == cfg.PUBNUB_UUID:
-                    if (pf := d.get('private_field')):
+                    if (ef := d.get('encrypted_field')):
                         prv = prvkeyget()
-                        d[pf] = decrypt(prv, d[pf])
+                        d[ef] = decrypt(prv, d[ef])
                 else: continue
                 
-                self.formatPokerData(d)
-                msg = self.processDealerMessage(d)
-                print(f'{pub}: {msg}')      
+                self.formatPokerPrimitives(d)
+                msg = self.formatDealerOutput(d)
         else: 
-            try:
-                data = loads(msg)
-                print(f"{pub}: {data['msg']}")
+            try: msg = loads(msg)['msg']
             except Exception as e: print(e)
+        
+        print(f'{pub}: {msg}')
 
     @classmethod
-    def formatPokerData(cls, data):
+    def formatPokerPrimitives(cls, data):
         out_id = data['out_id']
         if out_id == RoundPublicOutId.NEWTURN.name:
             data['board'] = cls.cardrepr(data['board'])
@@ -59,7 +57,7 @@ class SubscribeHandler(SubscribeCallback):
             data['cards'] = cls.cardrepr(eval(data['cards']))
 
     @staticmethod
-    def processDealerMessage(data):
+    def formatDealerOutput(data):
         out_id = data['out_id']
         if out_id in RoundPublicOutId.__members__:
             msg = getattr(cfg, 'OUTPUT_ROUND_PUBLIC_' + out_id)
